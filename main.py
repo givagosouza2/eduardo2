@@ -82,6 +82,8 @@ if uploaded_file is not None:
             icc_est = 1 - (iqr_diffs / (iqr_day1 + iqr_day2)) if (iqr_day1 + iqr_day2) != 0 else np.nan
             se_median_day1 = bootstrap_se_median(day1)
             se_median_day2 = bootstrap_se_median(day2)
+            combined_data = np.concatenate([day1, day2])
+            se_median_combined = bootstrap_se_median(combined_data)
             mdc = bootstrap_mdc(diffs)
             medae_val = medae(day1, day2)
             mdape_val = mdape(day1, day2)
@@ -96,6 +98,7 @@ if uploaded_file is not None:
             st.write(f"ICC Não Paramétrico (via IQR): {icc_est:.3f}")
             st.write(f"Erro padrão da Mediana (Dia 1): {se_median_day1:.3f}")
             st.write(f"Erro padrão da Mediana (Dia 2): {se_median_day2:.3f}")
+            st.write(f"Erro padrão da Mediana (Combinada - Dia 1 + Dia 2): {se_median_combined:.3f}")
             st.write(f"MDC Não Paramétrico (via Bootstrap): {mdc:.3f}")
             st.write(f"MedAE: {medae_val:.3f}")
             st.write(f"MdAPE: {mdape_val:.2f}%")
@@ -109,6 +112,7 @@ if uploaded_file is not None:
                     "ICC Não Paramétrico",
                     "Erro padrão da Mediana Dia 1",
                     "Erro padrão da Mediana Dia 2",
+                    "Erro padrão da Mediana Combinada",
                     "MDC Não Paramétrico",
                     "MedAE",
                     "MdAPE (%)"
@@ -120,6 +124,7 @@ if uploaded_file is not None:
                     icc_est,
                     se_median_day1,
                     se_median_day2,
+                    se_median_combined,
                     mdc,
                     medae_val,
                     mdape_val
