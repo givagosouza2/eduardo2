@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import io
 
 # -------------------------
 # Funções baseadas em IQR
@@ -54,39 +55,72 @@ if uploaded_file is not None:
 
         st.subheader("Resultados Não Paramétricos (usando IQR)")
 
-        # Mediana e IQR
+        # Calcula os indicadores
         median_day1 = np.median(day1)
         median_day2 = np.median(day2)
         iqr_day1 = iqr(day1)
         iqr_day2 = iqr(day2)
+        cv_day1 = cv_iqr(day1)
+        cv_day2 = cv_iqr(day2)
+        diffs = day1 - day2
+        iqr_diffs = iqr(diffs)
+        icc_est = 1 - (iqr_diffs / (iqr_day1 + iqr_day2)) if (iqr_day1 + iqr_day2) != 0 else np.nan
+        se_median_day1 = bootstrap_se_median(day1)
+        se_median_day2 = bootstrap_se_median(day2)
+        mdc = bootstrap_mdc(diffs)
+        medae_val = medae(day1, day2)
+        mdape_val = mdape(day1, day2)
+
+        # Exibição
         st.write(f"Mediana Dia 1: {median_day1:.3f}")
         st.write(f"Mediana Dia 2: {median_day2:.3f}")
         st.write(f"IQR Dia 1: {iqr_day1:.3f}")
         st.write(f"IQR Dia 2: {iqr_day2:.3f}")
-
-        # CV baseado no IQR
-        st.write(f"CV (IQR/Mediana) Dia 1: {cv_iqr(day1):.2f}%")
-        st.write(f"CV (IQR/Mediana) Dia 2: {cv_iqr(day2):.2f}%")
-
-        # ICC aproximado (não paramétrico simples baseado em IQR das diferenças)
-        diffs = day1 - day2
-        iqr_diffs = iqr(diffs)
-        icc_est = 1 - (iqr_diffs / (iqr_day1 + iqr_day2)) if (iqr_day1 + iqr_day2) != 0 else np.nan
-        st.write(f"ICC Não Paramétrico (estimado via IQR): {icc_est:.3f}")
-
-        # SE da mediana via bootstrap
-        se_median_day1 = bootstrap_se_median(day1)
-        se_median_day2 = bootstrap_se_median(day2)
+        st.write(f"CV (IQR/Mediana) Dia 1: {cv_day1:.2f}%")
+        st.write(f"CV (IQR/Mediana) Dia 2: {cv_day2:.2f}%")
+        st.write(f"ICC Não Paramétrico (via IQR): {icc_est:.3f}")
         st.write(f"Erro padrão da Mediana (Dia 1): {se_median_day1:.3f}")
         st.write(f"Erro padrão da Mediana (Dia 2): {se_median_day2:.3f}")
+        st.write(f"MDC Não Paramétrico (via Bootstrap): {mdc:.3f}")
+        st.write(f"MedAE: {medae_val:.3f}")
+        st.write(f"MdAPE: {mdape_val:.2f}%")
 
-        # MDC via bootstrap
-        mdc = bootstrap_mdc(diffs)
-        st.write(f"MDC Não Paramétrico (via Bootstrap das diferenças): {mdc:.3f}")
+        # Monta DataFrame de resultados
+        results = {
+            "Métrica": [
+                "Mediana Dia 1", "Mediana Dia 2",
+                "IQR Dia 1", "IQR Dia 2",
+                "CV Dia 1 (%)", "CV Dia 2 (%)",
+                "ICC Não Paramétrico",
+                "Erro padrão da Mediana Dia 1",
+                "Erro padrão da Mediana Dia 2",
+                "MDC Não Paramétrico",
+                "MedAE",
+                "MdAPE (%)"
+            ],
+            "Valor": [
+                median_day1, median_day2,
+                iqr_day1, iqr_day2,
+                cv_day1, cv_day2,
+                icc_est,
+                se_median_day1,
+                se_median_day2,
+                mdc,
+                medae_val,
+                mdape_val
+            ]
+        }
 
-        # Medidas de acurácia não paramétricas
-        st.write(f"MedAE (Erro absoluto mediano): {medae(day1, day2):.3f}")
-        st.write(f"MdAPE (Erro percentual absoluto mediano): {mdape(day1, day2):.2f}%")
+        results_df = pd.DataFrame(results)
+
+        # Exportação CSV
+        csv = results_df.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="📥 Baixar Resultados como CSV",
+            data=csv,
+            file_name='resultados_confiabilidade_nao_parametrica.csv',
+            mime='text/csv',
+        )
 
     except Exception as e:
         st.error(f"Erro ao processar os dados: {e}")
