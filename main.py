@@ -48,7 +48,18 @@ st.title("Análise Não Paramétrica de Confiabilidade Inter-Dias (Baseada em IQ
 uploaded_file = st.file_uploader("Carregue um arquivo CSV com duas colunas (Dia 1 e Dia 2)", type="csv")
 
 if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file)
+       
+    separadores = {';': 'Ponto e vírgula', ',': 'Vírgula', '\t': 'Tabulação'}
+    
+    for sep, nome in separadores.items():
+        try:
+            df = pd.read_csv(uploaded_file, sep=sep)
+            # Garante que o arquivo tenha pelo menos 2 colunas após o split
+            if df.shape[1] >= 2:
+                return df, nome
+        except Exception:
+            continue
+    
     try:
         day1 = df.iloc[:, 0].dropna().values
         day2 = df.iloc[:, 1].dropna().values
