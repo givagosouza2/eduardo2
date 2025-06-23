@@ -48,90 +48,94 @@ st.title("Análise Não Paramétrica de Confiabilidade Inter-Dias (Baseada em IQ
 uploaded_file = st.file_uploader("Carregue um arquivo CSV com duas colunas (Dia 1 e Dia 2)", type="csv")
 
 if uploaded_file is not None:
-       
+    
+    df = None
     separadores = {';': 'Ponto e vírgula', ',': 'Vírgula', '\t': 'Tabulação'}
     
     for sep, nome in separadores.items():
         try:
-            df = pd.read_csv(uploaded_file, sep=sep)
-            # Garante que o arquivo tenha pelo menos 2 colunas após o split
-            if df.shape[1] >= 2:
-                
+            temp_df = pd.read_csv(uploaded_file, sep=sep)
+            if temp_df.shape[1] >= 2:
+                df = temp_df
+                break
         except Exception:
             continue
-    
-    try:
-        day1 = df.iloc[:, 0].dropna().values
-        day2 = df.iloc[:, 1].dropna().values
 
-        st.subheader("Resultados Não Paramétricos (usando IQR)")
+    if df is None:
+        st.error("Erro ao ler o arquivo. Por favor, verifique o separador e o formato das colunas.")
+    else:
+        try:
+            day1 = df.iloc[:, 0].dropna().values
+            day2 = df.iloc[:, 1].dropna().values
 
-        # Calcula os indicadores
-        median_day1 = np.median(day1)
-        median_day2 = np.median(day2)
-        iqr_day1 = iqr(day1)
-        iqr_day2 = iqr(day2)
-        cv_day1 = cv_iqr(day1)
-        cv_day2 = cv_iqr(day2)
-        diffs = day1 - day2
-        iqr_diffs = iqr(diffs)
-        icc_est = 1 - (iqr_diffs / (iqr_day1 + iqr_day2)) if (iqr_day1 + iqr_day2) != 0 else np.nan
-        se_median_day1 = bootstrap_se_median(day1)
-        se_median_day2 = bootstrap_se_median(day2)
-        mdc = bootstrap_mdc(diffs)
-        medae_val = medae(day1, day2)
-        mdape_val = mdape(day1, day2)
+            st.subheader("Resultados Não Paramétricos (usando IQR)")
 
-        # Exibição
-        st.write(f"Mediana Dia 1: {median_day1:.3f}")
-        st.write(f"Mediana Dia 2: {median_day2:.3f}")
-        st.write(f"IQR Dia 1: {iqr_day1:.3f}")
-        st.write(f"IQR Dia 2: {iqr_day2:.3f}")
-        st.write(f"CV (IQR/Mediana) Dia 1: {cv_day1:.2f}%")
-        st.write(f"CV (IQR/Mediana) Dia 2: {cv_day2:.2f}%")
-        st.write(f"ICC Não Paramétrico (via IQR): {icc_est:.3f}")
-        st.write(f"Erro padrão da Mediana (Dia 1): {se_median_day1:.3f}")
-        st.write(f"Erro padrão da Mediana (Dia 2): {se_median_day2:.3f}")
-        st.write(f"MDC Não Paramétrico (via Bootstrap): {mdc:.3f}")
-        st.write(f"MedAE: {medae_val:.3f}")
-        st.write(f"MdAPE: {mdape_val:.2f}%")
+            # Calcula os indicadores
+            median_day1 = np.median(day1)
+            median_day2 = np.median(day2)
+            iqr_day1 = iqr(day1)
+            iqr_day2 = iqr(day2)
+            cv_day1 = cv_iqr(day1)
+            cv_day2 = cv_iqr(day2)
+            diffs = day1 - day2
+            iqr_diffs = iqr(diffs)
+            icc_est = 1 - (iqr_diffs / (iqr_day1 + iqr_day2)) if (iqr_day1 + iqr_day2) != 0 else np.nan
+            se_median_day1 = bootstrap_se_median(day1)
+            se_median_day2 = bootstrap_se_median(day2)
+            mdc = bootstrap_mdc(diffs)
+            medae_val = medae(day1, day2)
+            mdape_val = mdape(day1, day2)
 
-        # Monta DataFrame de resultados
-        results = {
-            "Métrica": [
-                "Mediana Dia 1", "Mediana Dia 2",
-                "IQR Dia 1", "IQR Dia 2",
-                "CV Dia 1 (%)", "CV Dia 2 (%)",
-                "ICC Não Paramétrico",
-                "Erro padrão da Mediana Dia 1",
-                "Erro padrão da Mediana Dia 2",
-                "MDC Não Paramétrico",
-                "MedAE",
-                "MdAPE (%)"
-            ],
-            "Valor": [
-                median_day1, median_day2,
-                iqr_day1, iqr_day2,
-                cv_day1, cv_day2,
-                icc_est,
-                se_median_day1,
-                se_median_day2,
-                mdc,
-                medae_val,
-                mdape_val
-            ]
-        }
+            # Exibição
+            st.write(f"Mediana Dia 1: {median_day1:.3f}")
+            st.write(f"Mediana Dia 2: {median_day2:.3f}")
+            st.write(f"IQR Dia 1: {iqr_day1:.3f}")
+            st.write(f"IQR Dia 2: {iqr_day2:.3f}")
+            st.write(f"CV (IQR/Mediana) Dia 1: {cv_day1:.2f}%")
+            st.write(f"CV (IQR/Mediana) Dia 2: {cv_day2:.2f}%")
+            st.write(f"ICC Não Paramétrico (via IQR): {icc_est:.3f}")
+            st.write(f"Erro padrão da Mediana (Dia 1): {se_median_day1:.3f}")
+            st.write(f"Erro padrão da Mediana (Dia 2): {se_median_day2:.3f}")
+            st.write(f"MDC Não Paramétrico (via Bootstrap): {mdc:.3f}")
+            st.write(f"MedAE: {medae_val:.3f}")
+            st.write(f"MdAPE: {mdape_val:.2f}%")
 
-        results_df = pd.DataFrame(results)
+            # Monta DataFrame de resultados
+            results = {
+                "Métrica": [
+                    "Mediana Dia 1", "Mediana Dia 2",
+                    "IQR Dia 1", "IQR Dia 2",
+                    "CV Dia 1 (%)", "CV Dia 2 (%)",
+                    "ICC Não Paramétrico",
+                    "Erro padrão da Mediana Dia 1",
+                    "Erro padrão da Mediana Dia 2",
+                    "MDC Não Paramétrico",
+                    "MedAE",
+                    "MdAPE (%)"
+                ],
+                "Valor": [
+                    median_day1, median_day2,
+                    iqr_day1, iqr_day2,
+                    cv_day1, cv_day2,
+                    icc_est,
+                    se_median_day1,
+                    se_median_day2,
+                    mdc,
+                    medae_val,
+                    mdape_val
+                ]
+            }
 
-        # Exportação CSV
-        csv = results_df.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            label="📥 Baixar Resultados como CSV",
-            data=csv,
-            file_name='resultados_confiabilidade_nao_parametrica.csv',
-            mime='text/csv',
-        )
+            results_df = pd.DataFrame(results)
 
-    except Exception as e:
-        st.error(f"Erro ao processar os dados: {e}")
+            # Exportação CSV
+            csv = results_df.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                label="📥 Baixar Resultados como CSV",
+                data=csv,
+                file_name='resultados_confiabilidade_nao_parametrica.csv',
+                mime='text/csv',
+            )
+
+        except Exception as e:
+            st.error(f"Erro ao processar os dados: {e}")
