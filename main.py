@@ -56,7 +56,7 @@ if uploaded_file is not None:
             df = pd.read_csv(uploaded_file, sep=sep)
             # Garante que o arquivo tenha pelo menos 2 colunas após o split
             if df.shape[1] >= 2:
-                return df, nome
+                
         except Exception:
             continue
     
